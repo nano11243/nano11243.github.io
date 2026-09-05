@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ต้นข่าว — News Web</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+--lav-light:#EEE9FB;
+--lav-mid:#D6C8F5;
+--purple:#7C5CE0;
+--purple-deep:#5B3FC4;
+--ink:#2B2540;
+--ink-soft:#6B6480;
+--paper:#FDFBFF;
+--line:#E7E1F5;
+--card:#FFFFFF;
+--danger:#E25563;
+--on:#3FC77A;
+--off:#D7D3E0;
+
+--d-bg:#171522;
+--d-card:#221F33;
+--d-line:#332F49;
+--d-ink:#EFEBFA;
+--d-ink-soft:#9C96B5;
+}
+
+*{box-sizing:border-box;}
+html,body{
+margin:0; padding:0;
+background:var(--paper);
+font-family:'Noto Sans Thai','Inter',sans-serif;
+color:var(--ink);
+-webkit-font-smoothing:antialiased;
+transition:background .3s ease;
+}
+body.dark{ background:var(--d-bg); color:var(--d-ink); }
+
+a{ color:inherit; }
+
+/* ---------- Top header (site-wide) ---------- */
+.topbar{
+position:sticky; top:0; z-index:20;
+background:linear-gradient(120deg,var(--lav-light) 0%, var(--lav-mid) 100%);
+padding:16px 32px;
+display:flex; align-items:center; justify-content:space-between;
+box-shadow:0 1px 0 rgba(0,0,0,.03);
+}
+body.dark .topbar{ background:linear-gradient(120deg,#2B2645 0%, #1F1B33 100%); }
+
+.brand{
+display:flex; align-items:center; gap:10px;
+}
+.brand-mark{
+width:38px; height:38px;
+border-radius:11px;
+background:var(--purple);
+display:flex; align-items:center; justify-content:center;
+}
+.brand-mark svg{ width:20px; height:20px; stroke:#fff; fill:none; }
+.brand-name{
+font-family:'Prompt',sans-serif;
+font-weight:600;
+font-size:19px;
+color:var(--purple-deep);
+}
+body.dark .brand-name{ color:#C9BBFF; }
+
+.top-actions{ display:flex; align-items:center; gap:10px; }
+
+.icon-btn{
+width:40px; height:40px;
+border-radius:12px;
+display:flex; align-items:center; justify-content:center;
+background:rgba(255,255,255,.6);
+border:none;
+cursor:pointer;
+transition:transform .15s ease, background .15s ease;
+position:relative;
+}
+body.dark .icon-btn{ background:rgba(255,255,255,.08); }
+.icon-btn:hover{ transform:translateY(-1px); }
+.icon-btn:active{ transform:scale(.92); }
+.icon-btn svg{ width:19px; height:19px; stroke:var(--purple-deep); fill:none; }
+body.dark .icon-btn svg{ stroke:#C9BBFF; }
+.icon-btn .dot{
+position:absolute; top:7px; right:7px;
+width:7px; height:7px; border-radius:50%;
+background:var(--danger);
+border:1.5px solid var(--lav-light);
+}
+body.dark .icon-btn .dot{ border-color:#2B2645; }
+
+/* ---------- Layout: sidebar + content ---------- */
+.layout{
+display:flex;
+max-width:1180px;
+margin:0 auto;
+min-height:calc(100vh - 71px);
+}
+
+.sidenav{
+width:220px;
+flex:0 0 auto;
+padding:28px 12px;
+display:flex;
+flex-direction:column;
+gap:6px;
+}
+.nav-item{
+display:flex; align-items:center; gap:12px;
+padding:11px 14px;
+border-radius:12px;
+border:none;
+background:transparent;
+cursor:pointer;
+font-family:inherit;
+font-size:14px;
+font-weight:500;
+color:var(--ink-soft);
+width:100%;
+text-align:left;
+transition:background .15s ease, color .15s ease;
+}
+body.dark .nav-item{ color:var(--d-ink-soft); }
+.nav-item svg{ width:19px; height:19px; stroke:currentColor; fill:none; flex:0 0 auto; }
+.nav-item.profile-icon svg{ fill:currentColor; stroke:none; }
+.nav-item:hover{ background:var(--lav-light); color:var(--purple-deep); }
+body.dark .nav-item:hover{ background:#2A2642; color:#C9BBFF; }
+.nav-item.active{ background:var(--purple); color:#fff; }
+.nav-item.active svg{ stroke:#fff; }
+.nav-item.active.profile-icon svg{ fill:#fff; }
+
+.sidenav-divider{
+height:1px; background:var(--line); margin:10px 4px;
+}
+body.dark .sidenav-divider{ background:var(--d-line); }
+
+/* ---------- Main content ---------- */
+main{
+flex:1 1 auto;
+padding:28px 32px 60px;
+min-width:0;
+}
+
+.page{ display:none; }
+.page.visible{ display:block; }
+
+.page-heading{
+font-size:13px;
+font-weight:600;
+color:var(--purple-deep);
+text-decoration:underline;
+text-underline-offset:4px;
+margin:0 0 20px;
+}
+body.dark .page-heading{ color:#C9BBFF; }
+
+.back-row{
+display:flex; align-items:center; gap:12px;
+margin-bottom:18px;
+}
+.back-row .icon-btn{ background:var(--lav-light); }
+body.dark .back-row .icon-btn{ background:#2A2642; }
+.back-row .headline{
+font-size:14px; font-weight:600;
+flex:1 1 auto;
+}
+.back-row .detail-actions{ display:flex; gap:6px; flex:0 0 auto; }
+.back-row .detail-actions .icon-btn{ width:34px; height:34px; }
+.back-row .detail-actions svg{ width:15px; height:15px; }
+
+/* News grid */
+.news-grid{
+display:grid;
+grid-template-columns:repeat(auto-fill, minmax(260px, 1fr));
+gap:14px;
+}
+.news-card{
+background:var(--card);
+border:1px solid var(--line);
+border-radius:16px;
+padding:16px;
+display:flex;
+align-items:center;
+justify-content:space-between;
+gap:10px;
+cursor:pointer;
+transition:border-color .15s ease, transform .12s ease, box-shadow .15s ease;
+}
+body.dark .news-card{ background:var(--d-card); border-color:var(--d-line); }
+.news-card:hover{ border-color:var(--purple); transform:translateY(-2px); box-shadow:0 8px 20px -12px rgba(92,63,196,.4); }
+.news-card .date{ font-size:11px; color:var(--ink-soft); margin-bottom:5px; }
+body.dark .news-card .date{ color:var(--d-ink-soft); }
+.news-card .headline-txt{ font-size:15px; font-weight:600; }
+.news-card .chev{
+flex:0 0 auto; width:28px; height:28px; border-radius:9px;
+background:var(--lav-light); display:flex; align-items:center; justify-content:center;
+}
+body.dark .news-card .chev{ background:#332F55; }
+.news-card .chev svg{ width:14px; height:14px; stroke:var(--purple-deep); }
+body.dark .news-card .chev svg{ stroke:#C9BBFF; }
+
+.feed-status{
+font-size:12.5px; color:var(--ink-soft); padding:18px 4px;
+}
+body.dark .feed-status{ color:var(--d-ink-soft); }
+
+/* Detail */
+.detail-panel{
+background:var(--card);
+border:1px solid var(--line);
+border-radius:18px;
+padding:26px 28px;
+max-width:680px;
+}
+body.dark .detail-panel{ background:var(--d-card); border-color:var(--d-line); }
+.detail-date{ font-size:11.5px; color:var(--ink-soft); margin-bottom:6px; }
+body.dark .detail-date{ color:var(--d-ink-soft); }
+.detail-title{ font-size:19px; font-weight:700; margin:0 0 18px; }
+.detail-line{ height:10px; border-radius:5px; background:var(--line); margin-bottom:11px; }
+body.dark .detail-line{ background:var(--d-line); }
+.detail-line.med{ width:88%; }
+.detail-line.short{ width:58%; }
+.empty-note{ font-size:11.5px; color:var(--ink-soft); margin-top:24px; }
+body.dark .empty-note{ color:var(--d-ink-soft); }
+
+/* Profile / login */
+.profile-wrap{ display:flex; gap:32px; flex-wrap:wrap; max-width:680px; }
+.profile-card{
+flex:0 0 220px;
+background:var(--card);
+border:2px solid var(--ink);
+border-radius:18px;
+padding:26px 18px;
+text-align:center;
+height:max-content;
+}
+body.dark .profile-card{ background:var(--d-card); border-color:var(--d-ink-soft); }
+.avatar-circle{
+width:64px; height:64px; margin:0 auto 12px;
+border-radius:50%; background:var(--lav-light);
+display:flex; align-items:center; justify-content:center;
+}
+body.dark .avatar-circle{ background:#332F55; }
+.avatar-circle svg{ width:30px; height:30px; stroke:var(--purple-deep); fill:none; }
+body.dark .avatar-circle svg{ stroke:#C9BBFF; }
+.profile-card .idline{ font-size:11.5px; color:var(--ink-soft); }
+body.dark .profile-card .idline{ color:var(--d-ink-soft); }
+
+.login-form{ flex:1 1 260px; min-width:240px; }
+.field{ margin-bottom:16px; }
+.field label{ display:block; font-size:12px; color:var(--ink-soft); margin-bottom:6px; }
+body.dark .field label{ color:var(--d-ink-soft); }
+.field input, .field textarea{
+width:100%; border:1px solid var(--line); background:var(--card);
+border-radius:10px; padding:11px 13px; font-size:13.5px;
+color:var(--ink); font-family:inherit;
+}
+.field textarea{ resize:vertical; min-height:96px; line-height:1.6; }
+body.dark .field input, body.dark .field textarea{ background:var(--d-bg); border-color:var(--d-line); color:var(--d-ink); }
+.field input:focus, .field textarea:focus{ outline:2px solid var(--purple); outline-offset:1px; }
+.field-error{ color:var(--danger); font-size:11.5px; margin-top:5px; display:none; }
+.primary-btn{
+padding:12px 22px; border:none; border-radius:12px;
+background:var(--purple); color:#fff; font-weight:600; font-size:13.5px;
+cursor:pointer; font-family:inherit; margin-top:4px;
+transition:background .15s ease, opacity .15s ease;
+}
+.primary-btn:hover{ background:var(--purple-deep); }
+.primary-btn:disabled{ opacity:.6; cursor:not-allowed; }
+.primary-btn.ghost{ background:transparent; color:var(--ink-soft); border:1px solid var(--line); }
+body.dark .primary-btn.ghost{ color:var(--d-ink-soft); border-color:var(--d-line); }
+.primary-btn.ghost:hover{ background:var(--lav-light); color:var(--purple-deep); }
+body.dark .primary-btn.ghost:hover{ background:#2A2642; color:#C9BBFF; }
+
+/* Settings */
+.settings-list{ max-width:520px; display:flex; flex-direction:column; gap:12px; }
+.setting-row{
+display:flex; align-items:center; justify-content:space-between;
+background:var(--card); border:1px solid var(--line); border-radius:14px;
+padding:15px 18px;
+}
+body.dark .setting-row{ background:var(--d-card); border-color:var(--d-line); }
+.setting-row .label{ font-size:14px; font-weight:500; }
+.setting-row .sub{ font-size:11.5px; color:var(--ink-soft); margin-top:3px; }
+body.dark .setting-row .sub{ color:var(--d-ink-soft); }
+
+.toggle{
+width:44px; height:25px; border-radius:999px; background:var(--off);
+position:relative; cursor:pointer; flex:0 0 auto; border:none;
+transition:background .2s ease;
+}
+body.dark .toggle{ background:#3C3756; }
+.toggle.active{ background:var(--on); }
+.toggle .knob{
+position:absolute; top:3px; left:3px; width:19px; height:19px;
+border-radius:50%; background:#fff; transition:left .2s ease;
+box-shadow:0 1px 3px rgba(0,0,0,.25);
+}
+.toggle.active .knob{ left:22px; }
+
+/* Confirm dialog (replaces window.confirm, which many sandboxed previews block) */
+.confirm-overlay{
+display:none; position:fixed; inset:0; z-index:50;
+background:rgba(20,16,35,.45);
+align-items:center; justify-content:center; padding:20px;
+}
+.confirm-overlay.visible{ display:flex; }
+.confirm-box{
+background:var(--card); border-radius:16px; padding:22px;
+max-width:340px; width:100%;
+box-shadow:0 20px 40px -12px rgba(0,0,0,.3);
+}
+body.dark .confirm-box{ background:var(--d-card); }
+.confirm-box p{ font-size:13.5px; line-height:1.6; margin:0 0 18px; }
+.confirm-box .row{ display:flex; gap:10px; justify-content:flex-end; }
+.confirm-box .row .primary-btn{ margin-top:0; padding:9px 16px; }
+
+@media (max-width:820px){
+.layout{ flex-direction:column; }
+.sidenav{
+width:100%; flex-direction:row; padding:10px 16px;
+overflow-x:auto; gap:8px; border-bottom:1px solid var(--line);
+}
+body.dark .sidenav{ border-color:var(--d-line); }
+.nav-item{ width:auto; white-space:nowrap; }
+main{ padding:22px 18px 50px; }
+.topbar{ padding:14px 18px; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+<div class="brand">
+<div class="brand-mark">
+<svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10"/></svg>
+</div>
+<span class="brand-name">ต้นข่าว</span>
+</div>
+<div class="top-actions">
+<button class="icon-btn" id="bell-icon" title="การแจ้งเตือน">
+<svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+<span class="dot"></span>
+</button>
+</div>
+</div>
+
+<div class="layout">
+<nav class="sidenav">
+<button class="nav-item" data-goto="settings">
+<svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9c.2.6.7 1 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+<span>ตั้งค่า</span>
+</button>
+<button class="nav-item active" data-goto="home">
+<svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h10M7 12h10M7 16h6"/></svg>
+<span>ข่าวสาร</span>
+</button>
+<button class="nav-item profile-icon" data-goto="profile">
+<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/></svg>
+<span>โปรไฟล์</span>
+</button>
+</nav>
+
+<main>
+
+<!-- ============ HOME FEED ============ -->
+<section class="page visible" id="page-home">
+<div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:4px;">
+<p class="page-heading" style="margin-bottom:0;">หน้าหลัก</p>
+<button class="primary-btn" id="add-news-btn" style="display:none; padding:9px 16px; font-size:12.5px;">+ เพิ่มข่าว</button>
+</div>
+<div class="news-grid" id="news-list"></div>
+<p class="feed-status" id="feed-status" style="display:none;">กำลังโหลดข่าว...</p>
+<p class="feed-status" id="delete-error" style="display:none;color:var(--danger);"></p>
+
+<!-- editor form: add / edit news, hidden unless editor mode is on -->
+<div id="news-editor" style="display:none; margin-top:20px; background:var(--card); border:1px solid var(--line); border-radius:16px; padding:20px;">
+<p style="font-size:13px; font-weight:600; margin:0 0 14px;" id="editor-heading">เพิ่มข่าวใหม่</p>
+<div class="field">
+<label for="edit-title">หัวข้อข่าว</label>
+<input id="edit-title" type="text" placeholder="ชื่อหัวข้อข่าวสาร">
+<div class="field-error" id="err-title">กรุณากรอกหัวข้อข่าว</div>
+</div>
+<div class="field">
+<label for="edit-date">วันที่ (เช่น 05/09/26)</label>
+<input id="edit-date" type="text" placeholder="XX/XX/XX">
+<div class="field-error" id="err-date">กรุณากรอกวันที่</div>
+</div>
+<div class="field">
+<label for="edit-body">เนื้อหาข่าว</label>
+<textarea id="edit-body" placeholder="เนื้อหาข่าวแบบละเอียด" rows="5"></textarea>
+</div>
+<p class="field-error" id="err-save"></p>
+<div style="display:flex; gap:10px;">
+<button class="primary-btn" id="save-news-btn">บันทึก</button>
+<button class="primary-btn ghost" id="cancel-news-btn">ยกเลิก</button>
+</div>
+</div>
+</section>
+
+<!-- ============ NEWS DETAIL ============ -->
+<section class="page" id="page-detail">
+<div class="back-row">
+<button class="icon-btn" id="back-from-detail" title="ย้อนกลับ">
+<svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+</button>
+<span class="headline">รายละเอียดข่าว</span>
+<div class="detail-actions" id="detail-actions" style="display:none;">
+<button class="icon-btn" id="edit-from-detail" title="แก้ไข">
+<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+</button>
+<button class="icon-btn" id="delete-from-detail" title="ลบ">
+<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1L5 6"/></svg>
+</button>
+</div>
+</div>
+<div class="detail-panel">
+<div class="detail-date" id="detail-date">XX/XX/XX</div>
+<div class="detail-title" id="detail-title">ชื่อหัวข้อข่าวสาร</div>
+<!-- real content from Firestore renders here -->
+<p id="detail-body" style="font-size:14px;line-height:1.9;color:var(--ink);display:none;white-space:pre-wrap;"></p>
+<!-- fallback skeleton shown only when a news item has no body text -->
+<div id="detail-skeleton">
+<div class="detail-line med"></div>
+<div class="detail-line"></div>
+<div class="detail-line med"></div>
+<div class="detail-line"></div>
+<div class="detail-line short"></div>
+</div>
+<p class="empty-note">— จบเนื้อหาข่าว —</p>
+</div>
+</section>
+
+<!-- ============ PROFILE / LOGIN ============ -->
+<section class="page" id="page-profile">
+<p class="page-heading">โปรไฟล์ผู้ใช้ / เข้าสู่ระบบ</p>
+<div class="profile-wrap">
+<div class="profile-card">
+<div class="avatar-circle">
+<svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/></svg>
+</div>
+<div class="idline" id="profile-idline">บัตรประจำตัว / บัตรนักเรียน</div>
+</div>
+
+<!-- shown when logged out -->
+<div class="login-form" id="login-form">
+<div class="field">
+<label for="uname">ชื่อผู้ใช้</label>
+<input id="uname" type="text" placeholder="ใส่ชื่อผู้ใช้งาน" autocomplete="username">
+</div>
+<div class="field">
+<label for="pw">รหัสผ่าน</label>
+<input id="pw" type="password" placeholder="กรอกรหัสผ่าน" autocomplete="current-password">
+</div>
+<p id="auth-error" style="color:var(--danger);font-size:12px;margin:-6px 0 12px;display:none;"></p>
+<button class="primary-btn" id="login-btn">เข้าสู่ระบบ</button>
+</div>
+
+<!-- shown when logged in -->
+<div class="login-form" id="account-panel" style="display:none;">
+<p style="font-size:13px;color:var(--ink-soft);margin:0 0 14px;">เข้าสู่ระบบด้วย: <strong id="account-email" style="color:var(--ink);"></strong> <span style="color:var(--purple-deep);font-weight:600;">(โหมดแก้ไข)</span></p>
+<button class="primary-btn" id="logout-btn" style="background:var(--danger);">ออกจากระบบ</button>
+</div>
+</div>
+</section>
+
+<!-- ============ SETTINGS ============ -->
+<section class="page" id="page-settings">
+<p class="page-heading">การตั้งค่า</p>
+<div class="settings-list">
+<div class="setting-row">
+<div>
+<div class="label">การแจ้งเตือน</div>
+<div class="sub">เปิด-ปิดการแจ้งเตือนข่าวใหม่</div>
+</div>
+<button class="toggle active" data-setting="notif"><span class="knob"></span></button>
+</div>
+<div class="setting-row">
+<div>
+<div class="label">โหมดมืด</div>
+<div class="sub">ปรับธีมเว็บไซต์</div>
+</div>
+<button class="toggle" data-setting="dark"><span class="knob"></span></button>
+</div>
+<div class="setting-row">
+<div>
+<div class="label">อัปเดตอัตโนมัติ</div>
+<div class="sub">เปิด-ปิดการอัปเดตข้อมูล</div>
+</div>
+<button class="toggle active" data-setting="autoupdate"><span class="knob"></span></button>
+</div>
+</div>
+</section>
+
+</main>
+</div>
+
+<!-- Custom confirm dialog: used instead of window.confirm(), which sandboxed
+previews commonly block (calling it there silently returns false/throws,
+so a delete button wired to confirm() would look broken with no error). -->
+<div class="confirm-overlay" id="confirm-overlay">
+<div class="confirm-box">
+<p id="confirm-message"></p>
+<div class="row">
+<button class="primary-btn ghost" id="confirm-cancel">ยกเลิก</button>
+<button class="primary-btn" id="confirm-ok" style="background:var(--danger);">ลบ</button>
+</div>
+</div>
+</div>
+
+<!-- ============ FIREBASE ============ -->
+<script type="module">
+// 1) Firebase SDK is loaded dynamically (see initFirebase() below), NOT with a
+// top-level `import`. A static top-level import throws and kills the ENTIRE
+// script if the network request is blocked (e.g. a sandboxed preview with no
+// internet access) — dynamic import() lets us catch that failure and keep the
+// rest of the app (news list, nav, login, toggles) working normally.
+
+// 2) PASTE YOUR OWN CONFIG HERE — get it from:
+// Firebase Console → Project settings → General → "Your apps" → SDK setup and configuration
+const firebaseConfig = {
+apiKey: "AIzaSyAqCK25vqSPTw4JjkUGBBi1XHTV6qyzVv4",
+authDomain: "school-news-4fd16.firebaseapp.com",
+projectId: "school-news-4fd16",
+storageBucket: "school-news-4fd16.firebasestorage.app",
+messagingSenderId: "884517439976",
+appId: "1:884517439976:web:5b06a96cf9f9f9dfddbc5d"
+};
+
+// Editor login: name + password must match an entry in EDITORS below.
+// NOTE: this is a simple client-side gate for a small internal tool — these values
+// are visible to anyone who reads this file's source, so don't use it to protect
+// anything sensitive. For real protection, use Firebase Auth + Firestore rules instead.
+const EDITORS = [
+{ user: "dev", pass: "123456" },
+// เพิ่มผู้ใช้คนอื่นได้โดยเพิ่มบรรทัดแบบนี้:
+// { user: "somchai", pass: "abc123" },
+];
+
+const NEWS_FALLBACK = [];
+
+// In-memory news store used whenever Firebase isn't configured/reachable, so
+// add/edit/delete still works for demos and local testing (resets on page reload).
+let localNews = NEWS_FALLBACK.map(n => ({ ...n }));
+
+let firebaseReady = false;
+let fb = {}; // holds the Firestore functions once (if) they load successfully
+
+async function initFirebase(){
+if (firebaseConfig.apiKey.startsWith("YOUR_")) {
+console.warn("[news-app] firebaseConfig ยังไม่ได้ใส่ค่าจริง — ใช้ข้อมูลตัวอย่างแทน");
+return;
+}
+try {
+const [{ initializeApp }, firestoreMod] = await Promise.all([
+import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"),
+import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"),
+]);
+const app = initializeApp(firebaseConfig);
+fb.db = firestoreMod.getFirestore(app);
+fb.collection = firestoreMod.collection;
+fb.getDocs = firestoreMod.getDocs;
+fb.query = firestoreMod.query;
+fb.orderBy = firestoreMod.orderBy;
+fb.limit = firestoreMod.limit;
+fb.doc = firestoreMod.doc;
+fb.getDoc = firestoreMod.getDoc;
+fb.setDoc = firestoreMod.setDoc;
+fb.addDoc = firestoreMod.addDoc;
+fb.deleteDoc = firestoreMod.deleteDoc;
+firebaseReady = true;
+} catch (err) {
+// Network blocked, offline, or bad config — app keeps working with fallback data.
+console.warn("[news-app] โหลด Firebase ไม่สำเร็จ (อาจไม่มีอินเทอร์เน็ต/ถูกบล็อก) — ใช้ข้อมูลตัวอย่างแทน:", err);
+firebaseReady = false;
+}
+}
+
+// Escape any user-entered text before it's dropped into innerHTML, so a news
+// title/date containing "<" or "&" can never be interpreted as markup/script.
+function escapeHtml(str){
+return String(str ?? "").replace(/[&<>"']/g, (c) => ({
+"&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+}[c]));
+}
+
+let isEditor = false;
+let editingId = null; // Firestore doc id (or local id) currently being edited, or null when adding new
+let currentDetailNews = null; // the news item currently open in the detail page, so edit/delete there know the target
+
+// ---------- Custom confirm dialog (does not rely on window.confirm) ----------
+const confirmOverlay = document.getElementById('confirm-overlay');
+const confirmMessage = document.getElementById('confirm-message');
+const confirmOkBtn = document.getElementById('confirm-ok');
+const confirmCancelBtn = document.getElementById('confirm-cancel');
+let confirmResolve = null;
+
+function askConfirm(message){
+confirmMessage.textContent = message;
+confirmOverlay.classList.add('visible');
+return new Promise((resolve) => { confirmResolve = resolve; });
+}
+function closeConfirm(result){
+confirmOverlay.classList.remove('visible');
+if (confirmResolve) { confirmResolve(result); confirmResolve = null; }
+}
+confirmOkBtn.addEventListener('click', () => closeConfirm(true));
+confirmCancelBtn.addEventListener('click', () => closeConfirm(false));
+confirmOverlay.addEventListener('click', (e) => { if (e.target === confirmOverlay) closeConfirm(false); });
+
+// ---------- News feed: Firestore collection "news" { title, date, body } ----------
+const newsList = document.getElementById('news-list');
+const feedStatus = document.getElementById('feed-status');
+const addNewsBtn = document.getElementById('add-news-btn');
+const newsEditor = document.getElementById('news-editor');
+
+function renderNews(items){
+document.getElementById('delete-error').style.display = "none";
+newsList.innerHTML = "";
+if (!items.length) {
+newsList.innerHTML = `<p class="feed-status" style="grid-column:1/-1;">ยังไม่มีข่าว${isEditor ? ' — กด "+ เพิ่มข่าว" เพื่อเริ่มเพิ่มข้อมูล' : ''}</p>`;
+return;
+}
+items.forEach((n) => {
+const card = document.createElement('div');
+card.className = 'news-card';
+card.innerHTML = `
+<div style="flex:1; min-width:0;">
+<div class="date">${escapeHtml(n.date ?? "")}</div>
+<div class="headline-txt">${escapeHtml(n.title ?? "(ไม่มีชื่อเรื่อง)")}</div>
+</div>
+<div style="display:flex; align-items:center; gap:6px; flex:0 0 auto;">
+${isEditor && n.id ? `
+<button class="icon-btn edit-news-btn" title="แก้ไข" style="width:28px;height:28px;border-radius:8px;">
+<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+</button>
+<button class="icon-btn delete-news-btn" title="ลบ" style="width:28px;height:28px;border-radius:8px;">
+<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1L5 6"/></svg>
+</button>` : ""}
+<div class="chev">
+<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+</div>
+</div>`;
+card.querySelector('.chev').addEventListener('click', () => openDetail(n));
+card.querySelector('.headline-txt').addEventListener('click', () => openDetail(n));
+const editBtn = card.querySelector('.edit-news-btn');
+if (editBtn) editBtn.addEventListener('click', (e) => { e.stopPropagation(); openEditor(n); });
+const delBtn = card.querySelector('.delete-news-btn');
+if (delBtn) delBtn.addEventListener('click', (e) => { e.stopPropagation(); deleteNews(n); });
+newsList.appendChild(card);
+});
+}
+
+async function loadNews(){
+if (!firebaseReady) {
+feedStatus.style.display = "none";
+renderNews(localNews);
+return;
+}
+feedStatus.textContent = "กำลังโหลดข่าว...";
+feedStatus.style.display = newsList.children.length ? "none" : "block";
+try {
+const q = fb.query(fb.collection(fb.db, "news"), fb.orderBy("date", "desc"), fb.limit(30));
+const snap = await fb.getDocs(q);
+const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+feedStatus.style.display = "none";
+renderNews(items.length ? items : localNews);
+} catch (err) {
+console.error("[news-app] โหลดข่าวจาก Firestore ไม่สำเร็จ:", err);
+feedStatus.textContent = "โหลดข่าวจากเซิร์ฟเวอร์ไม่สำเร็จ กำลังแสดงข้อมูลตัวอย่างแทน";
+feedStatus.style.display = "block";
+renderNews(localNews);
+}
+}
+renderNews(localNews); // show something immediately, before Firebase even attempts to load
+
+// ---------- Add / edit / delete news (editor mode only) ----------
+function clearEditorErrors(){
+document.getElementById('err-title').style.display = "none";
+document.getElementById('err-date').style.display = "none";
+document.getElementById('err-save').style.display = "none";
+document.getElementById('err-save').textContent = "";
+}
+
+function openEditor(n){
+editingId = n && n.id ? n.id : null;
+clearEditorErrors();
+document.getElementById('editor-heading').textContent = editingId ? "แก้ไขข่าว" : "เพิ่มข่าวใหม่";
+document.getElementById('edit-title').value = n?.title ?? "";
+document.getElementById('edit-date').value = n?.date ?? "";
+document.getElementById('edit-body').value = n?.body ?? "";
+newsEditor.style.display = "block";
+setActiveNav('home');
+showPage('page-home');
+newsEditor.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function closeEditor(){
+newsEditor.style.display = "none";
+editingId = null;
+document.getElementById('edit-title').value = "";
+document.getElementById('edit-date').value = "";
+document.getElementById('edit-body').value = "";
+clearEditorErrors();
+}
+
+addNewsBtn.addEventListener('click', () => openEditor(null));
+document.getElementById('cancel-news-btn').addEventListener('click', closeEditor);
+
+document.getElementById('save-news-btn').addEventListener('click', async () => {
+clearEditorErrors();
+const payload = {
+title: document.getElementById('edit-title').value.trim(),
+date: document.getElementById('edit-date').value.trim(),
+body: document.getElementById('edit-body').value.trim(),
+};
+
+let hasError = false;
+if (!payload.title) { document.getElementById('err-title').style.display = "block"; hasError = true; }
+if (!payload.date) { document.getElementById('err-date').style.display = "block"; hasError = true; }
+if (hasError) return;
+
+const targetId = editingId;
+const saveBtn = document.getElementById('save-news-btn');
+saveBtn.disabled = true;
+saveBtn.textContent = "กำลังบันทึก...";
+
+try {
+if (!firebaseReady) {
+// Local-only mode: just mutate the in-memory list, no Firebase needed.
+if (targetId) {
+const idx = localNews.findIndex(n => n.id === targetId);
+if (idx !== -1) localNews[idx] = { id: targetId, ...payload };
+} else {
+localNews.unshift({ id: "local-" + Date.now(), ...payload });
+}
+} else if (targetId) {
+await fb.setDoc(fb.doc(fb.db, "news", targetId), payload, { merge: true });
+} else {
+await fb.addDoc(fb.collection(fb.db, "news"), payload);
+}
+closeEditor();
+await loadNews();
+// if we were editing the item currently open on the detail page, refresh it too
+if (currentDetailNews && targetId && currentDetailNews.id === targetId) {
+openDetail({ id: targetId, ...payload });
+}
+} catch (err) {
+const errEl = document.getElementById('err-save');
+errEl.textContent = "บันทึกไม่สำเร็จ: " + err.message;
+errEl.style.display = "block";
+} finally {
+saveBtn.disabled = false;
+saveBtn.textContent = "บันทึก";
+}
+});
+
+async function deleteNews(n){
+if (!n.id) return;
+const ok = await askConfirm(`ลบข่าว "${n.title}" ใช่หรือไม่?`);
+if (!ok) return;
+try {
+if (!firebaseReady) {
+localNews = localNews.filter(item => item.id !== n.id);
+} else {
+await fb.deleteDoc(fb.doc(fb.db, "news", n.id));
+}
+// if the deleted item was open in the detail view, head back to the list
+if (currentDetailNews && currentDetailNews.id === n.id) {
+showPage('page-home');
+setActiveNav('home');
+}
+await loadNews();
+} catch (err) {
+const errEl = document.getElementById('delete-error');
+errEl.textContent = "ลบไม่สำเร็จ: " + err.message;
+errEl.style.display = "block";
+}
+}
+
+// ---------- Navigation ----------
+function showPage(id){
+document.querySelectorAll('.page').forEach(p => p.classList.remove('visible'));
+document.getElementById(id).classList.add('visible');
+}
+function setActiveNav(target){
+document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+const match = document.querySelector(`.nav-item[data-goto="${target}"]`);
+if (match) match.classList.add('active');
+}
+function openDetail(n){
+currentDetailNews = n;
+document.getElementById('detail-date').textContent = n.date ?? "";
+document.getElementById('detail-title').textContent = n.title ?? "";
+const bodyEl = document.getElementById('detail-body');
+const skeletonEl = document.getElementById('detail-skeleton');
+if (n.body) {
+bodyEl.textContent = n.body;
+bodyEl.style.display = "block";
+skeletonEl.style.display = "none";
+} else {
+bodyEl.style.display = "none";
+skeletonEl.style.display = "block";
+}
+document.getElementById('detail-actions').style.display = (isEditor && n.id) ? "flex" : "none";
+showPage('page-detail');
+setActiveNav('home');
+}
+
+document.getElementById('edit-from-detail').addEventListener('click', () => {
+if (currentDetailNews) openEditor(currentDetailNews);
+});
+document.getElementById('delete-from-detail').addEventListener('click', () => {
+if (currentDetailNews) deleteNews(currentDetailNews);
+});
+
+document.getElementById('bell-icon').addEventListener('click', () => {
+showPage('page-settings');
+setActiveNav('settings');
+});
+document.getElementById('back-from-detail').addEventListener('click', () => {
+showPage('page-home');
+setActiveNav('home');
+});
+document.querySelectorAll('.nav-item').forEach(btn => {
+btn.addEventListener('click', () => {
+const target = btn.dataset.goto;
+setActiveNav(target);
+showPage('page-' + target);
+});
+});
+
+// ---------- Login: name + password must match an entry in EDITORS ----------
+const loginForm = document.getElementById('login-form');
+const accountPanel = document.getElementById('account-panel');
+const authError = document.getElementById('auth-error');
+const profileIdline = document.getElementById('profile-idline');
+const SESSION_KEY = "newsAppEditorSession";
+let currentEditorName = "";
+
+function setEditorMode(on, name){
+isEditor = on;
+currentEditorName = on ? name : "";
+if (on) {
+loginForm.style.display = "none";
+accountPanel.style.display = "block";
+document.getElementById('account-email').textContent = name;
+profileIdline.textContent = "เข้าสู่ระบบแล้ว";
+addNewsBtn.style.display = "inline-block";
+sessionStorage.setItem(SESSION_KEY, name);
+} else {
+loginForm.style.display = "block";
+accountPanel.style.display = "none";
+profileIdline.textContent = "บัตรประจำตัว / บัตรนักเรียน";
+addNewsBtn.style.display = "none";
+closeEditor();
+sessionStorage.removeItem(SESSION_KEY);
+}
+// keep the detail page's edit/delete buttons in sync if a news item is open
+if (currentDetailNews) {
+document.getElementById('detail-actions').style.display = (isEditor && currentDetailNews.id) ? "flex" : "none";
+}
+loadNews(); // re-render so edit/delete buttons show or hide
+}
+
+document.getElementById('login-btn').addEventListener('click', (e) => {
+e.preventDefault();
+authError.style.display = "none";
+const name = document.getElementById('uname').value.trim();
+const password = document.getElementById('pw').value;
+
+const matched = EDITORS.find(ed => ed.user === name && ed.pass === password);
+if (!matched) {
+authError.textContent = "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง";
+authError.style.display = "block";
+return;
+}
+setEditorMode(true, name);
+});
+
+document.getElementById('uname').addEventListener('keydown', (e) => {
+if (e.key === "Enter") document.getElementById('login-btn').click();
+});
+document.getElementById('pw').addEventListener('keydown', (e) => {
+if (e.key === "Enter") document.getElementById('login-btn').click();
+});
+
+// Restore login across page refresh within the same browser tab/session.
+const savedSession = sessionStorage.getItem(SESSION_KEY);
+if (savedSession && EDITORS.some(ed => ed.user === savedSession)) {
+setEditorMode(true, savedSession);
+}
+
+document.getElementById('logout-btn').addEventListener('click', () => {
+setEditorMode(false, "");
+document.getElementById('uname').value = "";
+document.getElementById('pw').value = "";
+});
+
+// ---------- Settings: persist toggles to Firestore (shared doc, since there's no real account system) ----------
+async function loadSettings(){
+if (!firebaseReady) return;
+try {
+const snap = await fb.getDoc(fb.doc(fb.db, "settings", "app"));
+if (snap.exists()) {
+const prefs = snap.data();
+document.querySelectorAll('.toggle').forEach(t => {
+const key = t.dataset.setting;
+if (key in prefs) {
+t.classList.toggle('active', !!prefs[key]);
+if (key === 'dark') document.body.classList.toggle('dark', !!prefs[key]);
+}
+});
+}
+} catch (err) {
+console.error("[news-app] โหลดการตั้งค่าไม่สำเร็จ:", err);
+}
+}
+
+async function saveSetting(key, value){
+if (!firebaseReady) return;
+try {
+await fb.setDoc(fb.doc(fb.db, "settings", "app"), { [key]: value }, { merge: true });
+} catch (err) {
+console.error("[news-app] บันทึกการตั้งค่าไม่สำเร็จ:", err);
+}
+}
+
+document.querySelectorAll('.toggle').forEach(t => {
+t.addEventListener('click', () => {
+t.classList.toggle('active');
+const isActive = t.classList.contains('active');
+if (t.dataset.setting === 'dark') {
+document.body.classList.toggle('dark', isActive);
+}
+saveSetting(t.dataset.setting, isActive);
+});
+});
+
+// ---------- Kick off Firebase last ----------
+// Everything above already works with NEWS_FALLBACK. If Firebase loads
+// successfully, upgrade the news list and settings with real data.
+initFirebase().then(() => {
+if (firebaseReady) {
+loadNews();
+loadSettings();
+}
+});
+</script>
+
+</body>
+</html>
