@@ -759,10 +759,20 @@
     document.getElementById(id).addEventListener('input', handleDraftInput);
   });
 
+  // ---------- Remember which draft is open, so a refresh can reopen the editor ----------
+  const ACTIVE_DRAFT_KEY = "newsAppActiveDraftId";
+  function setActiveDraftMarker(id){
+    try { localStorage.setItem(ACTIVE_DRAFT_KEY, id); } catch (e) { /* ignore */ }
+  }
+  function clearActiveDraftMarker(){
+    try { localStorage.removeItem(ACTIVE_DRAFT_KEY); } catch (e) { /* ignore */ }
+  }
+
   async function openEditor(n){
     editingId = n && n.id ? n.id : null;
     clearEditorErrors();
     document.getElementById('editor-heading').textContent = editingId ? "แก้ไขข่าว" : "เพิ่มข่าวใหม่";
+    setActiveDraftMarker(draftDocId());
 
     // Show original/blank values immediately, then upgrade to a saved draft if one exists.
     document.getElementById('edit-title').value = n?.title ?? "";
@@ -795,6 +805,7 @@
     clearEditorErrors();
     clearTimeout(draftSaveTimer);
     clearDraftRemote(docId);
+    clearActiveDraftMarker();
   }
 
   addNewsBtn.addEventListener('click', () => openEditor(null));
@@ -1033,10 +1044,29 @@
   // ---------- Kick off Firebase last ----------
   // Everything above already works with NEWS_FALLBACK. If Firebase loads
   // successfully, upgrade the news list and settings with real data.
-  initFirebase().then(() => {
+  initFirebase().then(async () => {
     if (firebaseReady) {
       loadNews();
       loadSettings();
+    }
+    // If the editor was left open with unsaved text before a refresh (or a crash/
+    // closed tab), reopen it now with whatever was last typed.
+    if (isEditor) {
+      let activeDraftId = null;
+      try { activeDraftId = localStorage.getItem(ACTIVE_DRAFT_KEY); } catch (e) { /* ignore */ }
+      if (activeDraftId === "new") {
+        openEditor(null);
+      } else if (activeDraftId && activeDraftId.startsWith("edit-")) {
+        const originalId = activeDraftId.slice(5);
+        let original = { id: originalId };
+        if (firebaseReady) {
+          try {
+            const snap = await fb.getDoc(fb.doc(fb.db, "news", originalId));
+            if (snap.exists()) original = { id: originalId, ...snap.data() };
+          } catch (e) { /* fall back to draft-only values inside openEditor */ }
+        }
+        openEditor(original);
+      }
     }
   });
 </script>
