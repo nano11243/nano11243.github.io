@@ -688,61 +688,113 @@
     document.getElementById('err-save').textContent = "";
   }
 
-  // ---------- Draft autosave for the editor form ----------
-  // Keeps whatever's typed in the add/edit form safe in localStorage as you type,
-  // so an accidental refresh or tab close doesn't wipe out unsaved work.
-  const DRAFT_KEY = "newsAppEditorDraft";
+  // ---------- Draft autosave for the editor form (stored in Firestore) ----------
+  // Keeps whatever's typed in the add/edit form safe in a "drafts" collection as
+  // you type (debounced), so an accidental refresh/tab close/device switch doesn't
+  // wipe out unsaved work. Falls back to localStorage only while Firebase hasn't
+  // finished loading yet (or if it's unreachable), so typing is never lost either way.
+  const DRAFT_KEY_LOCAL = "newsAppEditorDraft";
+  let draftSaveTimer = null;
 
-  function saveDraft(){
-    const draft = {
+  function draftDocId(){
+    return editingId ? ("edit-" + editingId) : "new";
+  }
+
+  function currentDraftValues(){
+    return {
       editingId: editingId,
       title: document.getElementById('edit-title').value,
       date: document.getElementById('edit-date').value,
       body: document.getElementById('edit-body').value,
     };
-    try { localStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); } catch (e) { /* storage unavailable, ignore */ }
   }
-  function loadDraft(){
+
+  function saveDraftLocal(draft){
+    try { localStorage.setItem(DRAFT_KEY_LOCAL, JSON.stringify(draft)); } catch (e) { /* storage unavailable, ignore */ }
+  }
+  function loadDraftLocal(){
     try {
-      const raw = localStorage.getItem(DRAFT_KEY);
+      const raw = localStorage.getItem(DRAFT_KEY_LOCAL);
       return raw ? JSON.parse(raw) : null;
     } catch (e) { return null; }
   }
-  function clearDraft(){
-    try { localStorage.removeItem(DRAFT_KEY); } catch (e) { /* ignore */ }
+  function clearDraftLocal(){
+    try { localStorage.removeItem(DRAFT_KEY_LOCAL); } catch (e) { /* ignore */ }
+  }
+
+  async function saveDraftRemote(draft){
+    if (!firebaseReady) return;
+    try {
+      await fb.setDoc(fb.doc(fb.db, "drafts", draftDocId()), draft);
+    } catch (e) {
+      console.error("[news-app] บันทึกร่างลง Firestore ไม่สำเร็จ:", e);
+    }
+  }
+
+  async function loadDraftRemote(docId){
+    if (!firebaseReady) return null;
+    try {
+      const snap = await fb.getDoc(fb.doc(fb.db, "drafts", docId));
+      return snap.exists() ? snap.data() : null;
+    } catch (e) {
+      console.error("[news-app] โหลดร่างจาก Firestore ไม่สำเร็จ:", e);
+      return null;
+    }
+  }
+
+  async function clearDraftRemote(docId){
+    clearDraftLocal();
+    if (!firebaseReady) return;
+    try { await fb.deleteDoc(fb.doc(fb.db, "drafts", docId)); } catch (e) { /* ignore */ }
+  }
+
+  function handleDraftInput(){
+    const draft = currentDraftValues();
+    saveDraftLocal(draft); // instant local safety net regardless of Firebase state
+    clearTimeout(draftSaveTimer);
+    draftSaveTimer = setTimeout(() => saveDraftRemote(draft), 600); // debounced write to Firestore
   }
 
   ['edit-title', 'edit-date', 'edit-body'].forEach(id => {
-    document.getElementById(id).addEventListener('input', saveDraft);
+    document.getElementById(id).addEventListener('input', handleDraftInput);
   });
 
-  function openEditor(n){
+  async function openEditor(n){
     editingId = n && n.id ? n.id : null;
     clearEditorErrors();
     document.getElementById('editor-heading').textContent = editingId ? "แก้ไขข่าว" : "เพิ่มข่าวใหม่";
 
-    // If there's an autosaved draft for this exact item (or for "add new" when
-    // editingId is null), restore it instead of the original/blank values.
-    const draft = loadDraft();
-    const useDraft = draft && draft.editingId === editingId;
-    document.getElementById('edit-title').value = useDraft ? draft.title : (n?.title ?? "");
-    document.getElementById('edit-date').value = useDraft ? draft.date : (n?.date ?? "");
-    document.getElementById('edit-body').value = useDraft ? draft.body : (n?.body ?? "");
+    // Show original/blank values immediately, then upgrade to a saved draft if one exists.
+    document.getElementById('edit-title').value = n?.title ?? "";
+    document.getElementById('edit-date').value = n?.date ?? "";
+    document.getElementById('edit-body').value = n?.body ?? "";
 
     newsEditor.style.display = "block";
     setActiveNav('home');
     showPage('page-home');
     newsEditor.scrollIntoView({ behavior: "smooth", block: "center" });
+
+    const docId = draftDocId();
+    const remoteDraft = await loadDraftRemote(docId);
+    const localDraft = loadDraftLocal();
+    const draft = remoteDraft ?? (localDraft && localDraft.editingId === editingId ? localDraft : null);
+    if (draft && editingId === draft.editingId) {
+      document.getElementById('edit-title').value = draft.title ?? "";
+      document.getElementById('edit-date').value = draft.date ?? "";
+      document.getElementById('edit-body').value = draft.body ?? "";
+    }
   }
 
   function closeEditor(){
+    const docId = draftDocId();
     newsEditor.style.display = "none";
     editingId = null;
     document.getElementById('edit-title').value = "";
     document.getElementById('edit-date').value = "";
     document.getElementById('edit-body').value = "";
     clearEditorErrors();
-    clearDraft();
+    clearTimeout(draftSaveTimer);
+    clearDraftRemote(docId);
   }
 
   addNewsBtn.addEventListener('click', () => openEditor(null));
